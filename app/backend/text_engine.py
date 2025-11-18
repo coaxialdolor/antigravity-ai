@@ -54,23 +54,31 @@ class TextEngine:
         except Exception as e:
             return f"Failed to load model: {e}"
 
-    def generate(self, prompt, history=[], system_prompt="You are a helpful assistant."):
+    def generate(self, prompt, history=[], system_prompt="You are a helpful assistant.", stream=False):
         if not self.model:
+            if stream:
+                yield "Please load a model first."
+                return
             return "Please load a model first."
 
-        # Simple chat format construction (assuming Llama-3/ChatML style for simplicity, 
-        # but ideally should use chat templates provided by the library if available)
-        
-        # Construct prompt
+        # Simple chat format construction (assuming Llama-3/ChatML style for simplicity)
         full_prompt = f"<|system|>\n{system_prompt}</s>\n"
         for user_msg, ai_msg in history:
-            full_prompt += f"<|user|>\n{user_msg}</s>\n<|assistant|>\n{ai_msg}</s>\n"
+            if user_msg: full_prompt += f"<|user|>\n{user_msg}</s>\n"
+            if ai_msg: full_prompt += f"<|assistant|>\n{ai_msg}</s>\n"
         full_prompt += f"<|user|>\n{prompt}</s>\n<|assistant|>\n"
 
         output = self.model(
             full_prompt, 
-            max_tokens=512, 
+            max_tokens=2048, 
             stop=["</s>", "<|user|>", "<|system|>"], 
-            echo=False
+            echo=False,
+            stream=stream
         )
-        return output['choices'][0]['text'].strip()
+        
+        if stream:
+            for chunk in output:
+                delta = chunk['choices'][0]['text']
+                yield delta
+        else:
+            return output['choices'][0]['text'].strip()
