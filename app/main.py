@@ -26,100 +26,272 @@ image_engine = ImageEngine(os.path.join(models_root, "image"))
 stt_engine = STTEngine(os.path.join(models_root, "stt"))
 session_manager = SessionManager()
 
-# --- CSS (Claude Style - Aligned) ---
+# --- CSS (Claude Style) ---
 css = """
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* RESET */
-body, .gradio-container {
-    background-color: #1e1e1e !important;
-    color: #e0e0e0 !important;
-    font-family: 'Inter', sans-serif !important;
-    margin: 0 !important;
-    padding: 0 !important;
+* {
+    box-sizing: border-box;
 }
 
-/* LAYOUT */
+body, .gradio-container {
+    background-color: #0f0f0f !important;
+    color: #e0e0e0 !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Main Layout */
 .main-layout {
     display: flex !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: #171717 !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-right: 1px solid #2a2a2a !important;
     height: 100vh !important;
     overflow: hidden !important;
 }
 
-/* SIDEBAR */
-.sidebar {
-    background-color: #171717 !important;
-    border-right: 1px solid #333 !important;
-    width: 260px !important;
-    min-width: 260px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    padding: 16px !important;
-    gap: 16px !important;
+.sidebar-header {
+    padding: 16px 20px !important;
+    border-bottom: 1px solid #2a2a2a !important;
 }
 
-.sidebar-btn {
-    background-color: #2a2a2a !important;
+.sidebar-brand {
+    font-size: 18px !important;
+    font-weight: 600 !important;
     color: #fff !important;
-    border: 1px solid #444 !important;
-    border-radius: 8px !important;
-    padding: 8px 12px !important;
-    text-align: center !important;
-    cursor: pointer !important;
-    transition: background 0.2s !important;
+    margin: 0 !important;
+    letter-spacing: -0.3px !important;
 }
-.sidebar-btn:hover { background-color: #333 !important; }
+
+.new-chat-btn {
+    margin: 12px 16px !important;
+    background-color: #fff !important;
+    color: #0f0f0f !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: calc(100% - 32px) !important;
+}
+
+.new-chat-btn:hover {
+    background-color: #e8e8e8 !important;
+}
+
+.new-chat-btn::before {
+    content: "+" !important;
+    font-size: 18px !important;
+    font-weight: 300 !important;
+}
+
+.sidebar-nav {
+    padding: 8px 0 !important;
+    border-bottom: 1px solid #2a2a2a !important;
+}
+
+.nav-item {
+    padding: 8px 20px !important;
+    color: #a0a0a0 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: color 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.nav-item:hover {
+    color: #fff !important;
+    background-color: #1f1f1f !important;
+}
+
+.history-section {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 12px 0 !important;
+}
+
+.history-section-label {
+    padding: 8px 20px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #707070 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
 
 .history-list {
-    flex-grow: 1 !important;
-    overflow-y: auto !important;
+    margin-top: 8px !important;
 }
-.history-list label {
-    background: transparent !important;
-    border: none !important;
-    padding: 8px !important;
-    color: #aaa !important;
-    cursor: pointer !important;
-    display: block !important;
-    border-radius: 6px !important;
-    margin-bottom: 4px !important;
-}
-.history-list label:hover { background-color: #2a2a2a !important; color: #fff !important; }
-.history-list input { display: none !important; }
 
-/* CHAT AREA */
+.history-item {
+    padding: 8px 20px !important;
+    color: #a0a0a0 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    border-left: 3px solid transparent !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+}
+
+.history-item:hover {
+    background-color: #1f1f1f !important;
+    color: #fff !important;
+}
+
+.history-item.selected {
+    background-color: #1f1f1f !important;
+    color: #fff !important;
+    border-left-color: #d97757 !important;
+}
+
+.history-list label {
+    padding: 8px 20px !important;
+    color: #a0a0a0 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    border-left: 3px solid transparent !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+}
+
+.history-list label:hover {
+    background-color: #1f1f1f !important;
+    color: #fff !important;
+}
+
+.history-list input[type="radio"]:checked + label {
+    background-color: #1f1f1f !important;
+    color: #fff !important;
+    border-left-color: #d97757 !important;
+}
+
+.sidebar-footer {
+    padding: 16px !important;
+    border-top: 1px solid #2a2a2a !important;
+}
+
+.settings-accordion {
+    margin-top: 8px !important;
+}
+
+.settings-content {
+    padding: 12px 20px !important;
+}
+
+.setting-item {
+    margin-bottom: 16px !important;
+}
+
+.setting-label {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: #a0a0a0 !important;
+    margin-bottom: 6px !important;
+    display: block !important;
+}
+
+.setting-control {
+    width: 100% !important;
+}
+
+.setting-control select,
+.setting-control input[type="text"] {
+    background-color: #1f1f1f !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    width: 100% !important;
+}
+
+.setting-control select:focus,
+.setting-control input[type="text"]:focus {
+    outline: none !important;
+    border-color: #d97757 !important;
+}
+
+/* Chat Area */
 .chat-area {
-    flex-grow: 1 !important;
-    position: relative !important;
+    flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
-    background-color: #1e1e1e !important;
-    align-items: center !important; /* Center content */
+    background-color: #0f0f0f !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.chat-header {
+    padding: 16px 24px !important;
+    border-bottom: 1px solid #2a2a2a !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.chat-content {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 24px !important;
+    padding-bottom: 120px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
 }
 
 #chatbot {
     width: 100% !important;
-    max-width: 900px !important; /* Fixed width for alignment */
-    flex-grow: 1 !important;
-    overflow-y: auto !important;
-    padding-bottom: 150px !important;
+    max-width: 900px !important;
     background: transparent !important;
 }
 
-/* Message Bubbles */
 .message-row {
-    padding: 12px 0 !important;
+    margin-bottom: 24px !important;
     width: 100% !important;
 }
 
 .message-row.user-row .message {
-    background-color: #3a3a3a !important;
+    background-color: #1f1f1f !important;
     color: #fff !important;
     border-radius: 12px !important;
-    padding: 12px 18px !important;
-    border: none !important;
-    max-width: 80% !important;
+    padding: 14px 18px !important;
+    border: 1px solid #2a2a2a !important;
+    max-width: 85% !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
 }
+
 .message-row.bot-row .message {
     background: transparent !important;
     color: #e0e0e0 !important;
@@ -128,97 +300,232 @@ body, .gradio-container {
     max-width: 100% !important;
 }
 
-/* INPUT CONTAINER (Aligned) */
-.input-container-wrapper {
-    position: absolute !important;
-    bottom: 30px !important;
-    width: 100% !important;
-    max-width: 900px !important; /* Matches Chatbot Width */
+/* Input Container */
+.input-container {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 260px !important;
+    right: 0 !important;
+    padding: 20px 24px !important;
+    background-color: #0f0f0f !important;
+    border-top: 1px solid #2a2a2a !important;
     z-index: 100 !important;
-    padding: 0 20px !important; /* Safety padding on small screens */
+}
+
+.input-wrapper {
+    max-width: 900px !important;
+    margin: 0 auto !important;
+    position: relative !important;
 }
 
 .input-box {
-    background-color: #2a2a2a !important;
-    border: 1px solid #444 !important;
-    border-radius: 16px !important;
-    padding: 12px !important;
+    background-color: #1f1f1f !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 12px !important;
+    padding: 12px 16px !important;
     display: flex !important;
-    flex-direction: column !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
-}
-.input-box:focus-within { border-color: #666 !important; }
-
-/* Textarea */
-.input-textarea textarea {
-    background: transparent !important;
-    border: none !important;
-    color: #fff !important;
-    padding: 0 !important;
-    font-size: 1rem !important;
-    resize: none !important;
-    box-shadow: none !important;
-    min-height: 44px !important;
-}
-.input-textarea .wrap { background: transparent !important; border: none !important; }
-
-/* Toolbar */
-.input-toolbar {
-    display: flex !important;
-    justify-content: space-between !important;
     align-items: center !important;
-    margin-top: 8px !important;
-    padding-top: 8px !important;
-    border-top: 1px solid #3a3a3a !important;
+    gap: 12px !important;
+    transition: border-color 0.2s !important;
 }
 
-.tool-group {
+.input-box:focus-within {
+    border-color: #d97757 !important;
+}
+
+.input-icons {
     display: flex !important;
     gap: 8px !important;
     align-items: center !important;
 }
 
-.tool-btn {
+.input-icon-btn {
     background: transparent !important;
     border: none !important;
-    color: #aaa !important;
-    padding: 0 !important;
-    border-radius: 4px !important;
+    color: #707070 !important;
     cursor: pointer !important;
-    width: 36px !important;
-    height: 36px !important;
+    padding: 6px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 1.2rem !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
 }
-.tool-btn:hover { background-color: #3a3a3a !important; color: #fff !important; }
+
+.input-icon-btn:hover {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+}
+
+.input-icon-btn button {
+    background: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.input-icon-btn button:hover {
+    background: transparent !important;
+}
+
+.input-textarea {
+    flex: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 15px !important;
+    resize: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    min-height: 24px !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+.input-textarea::placeholder {
+    color: #707070 !important;
+}
+
+.input-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.model-selector {
+    background-color: #171717 !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    color: #a0a0a0 !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.model-selector:hover {
+    background-color: #1f1f1f !important;
+    color: #fff !important;
+}
 
 .send-btn {
     background-color: #d97757 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s !important;
     color: #fff !important;
-    border-radius: 6px !important;
-    font-size: 0.9rem !important;
-    padding: 8px 16px !important;
-    width: auto !important;
+}
+
+.send-btn:hover {
+    background-color: #e08868 !important;
+}
+
+.send-btn::before {
+    content: "↑" !important;
+    font-size: 18px !important;
     font-weight: 600 !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Audio component styling */
+.input-icon-btn audio {
+    display: none !important;
+}
+
+.input-icon-btn .wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    background: transparent !important;
     border: none !important;
 }
-.send-btn:hover { background-color: #e08868 !important; }
 
-.hidden-audio { display: none !important; }
+.input-icon-btn .wrap button {
+    background: transparent !important;
+    border: none !important;
+    color: #707070 !important;
+    padding: 0 !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s !important;
+}
+
+.input-icon-btn .wrap button:hover {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+}
+
+.input-icon-btn .wrap button::before {
+    content: "🎤" !important;
+    font-size: 16px !important;
+}
+
+/* Scrollbar */
+.history-section::-webkit-scrollbar,
+.chat-content::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+.history-section::-webkit-scrollbar-track,
+.chat-content::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.history-section::-webkit-scrollbar-thumb,
+.chat-content::-webkit-scrollbar-thumb {
+    background: #2a2a2a !important;
+    border-radius: 4px !important;
+}
+
+.history-section::-webkit-scrollbar-thumb:hover,
+.chat-content::-webkit-scrollbar-thumb:hover {
+    background: #3a3a3a !important;
+}
 """
 
 theme = gr.themes.Base(
-    primary_hue="zinc",
+    primary_hue="orange",
     secondary_hue="zinc",
     neutral_hue="zinc",
     font=[gr.themes.GoogleFont("Inter"), "sans-serif"]
 ).set(
-    body_background_fill="#1e1e1e",
+    body_background_fill="#0f0f0f",
     body_text_color="#e0e0e0",
-    block_background_fill="#1e1e1e",
-    block_border_width="0px"
+    block_background_fill="#0f0f0f",
+    block_border_width="0px",
+    button_primary_background_fill="#d97757",
+    button_primary_background_fill_hover="#e08868",
+    button_primary_text_color="#fff"
 )
 
 PERSONALITIES = {
@@ -304,68 +611,177 @@ def chat_turn(message, history, session_id, personality, voice_enabled, voice_id
         
     yield history, audio, gr.update(choices=refresh_session_list())
 
-def create_new_session(): sid, _ = session_manager.create_session(); return sid, [], gr.update(choices=refresh_session_list())
+def create_new_session(): 
+    sid, _ = session_manager.create_session()
+    return sid, [], gr.update(choices=refresh_session_list())
 def load_session(evt: gr.SelectData): 
     if not evt.value: return None, []
-    sid = evt.value.split(" | ")[-1]
-    data = session_manager.get_session(sid)
-    return sid, data["history"] if data else []
-def refresh_session_list(): return [f"{s['title']} | {s['id']}" for s in session_manager.list_sessions()]
+    sessions = session_manager.list_sessions()
+    session = next((s for s in sessions if s['title'] == evt.value), None)
+    if session:
+        return session['id'], session.get('history', [])
+    return None, []
+def refresh_session_list(): 
+    sessions = session_manager.list_sessions()
+    return [s['title'] for s in sessions]
 def delete_current_session(sel): 
-    if sel: session_manager.delete_session(sel.split(" | ")[-1])
+    if sel: 
+        sessions = session_manager.list_sessions()
+        session = next((s for s in sessions if s['title'] == sel), None)
+        if session:
+            session_manager.delete_session(session['id'])
     return gr.update(choices=refresh_session_list(), value=None), None, []
 def add_path(p): text_engine.custom_dirs.append(Path(p)); return gr.update(choices=get_available_models())
 
 # --- UI ---
 with gr.Blocks(theme=theme, css=css, title="Antigravity") as demo:
     session_id = gr.State(None)
+    selected_history_item = gr.State(None)
     
     with gr.Row(elem_classes=["main-layout"]):
         # Sidebar
         with gr.Column(elem_classes=["sidebar"], scale=0):
-            gr.Markdown("### Antigravity")
-            new_chat_btn = gr.Button("+ New Chat", elem_classes=["sidebar-btn"])
+            # Header
+            with gr.Column(elem_classes=["sidebar-header"]):
+                gr.Markdown("### Antigravity", elem_classes=["sidebar-brand"])
             
-            gr.Markdown("#### History")
-            history_list = gr.Radio(choices=[], label="", interactive=True, container=False, elem_classes=["history-list"])
+            # New Chat Button
+            new_chat_btn = gr.Button("New Chat", elem_classes=["new-chat-btn"])
             
-            with gr.Accordion("Settings", open=False):
-                model_selector = gr.Dropdown(choices=get_available_models(), label="Model")
-                personality_selector = gr.Dropdown(choices=list(PERSONALITIES.keys()), value="Helpful Assistant", label="Personality")
-                voice_chk = gr.Checkbox(label="Voice")
-                voice_sel = gr.Dropdown(choices=get_voice_list(), value="en-US-AriaNeural", label="Voice")
-                delete_chat_btn = gr.Button("Delete Chat")
-                path_input = gr.Textbox(label="Path")
-                add_path_btn = gr.Button("Add")
-
+            # Navigation (simplified)
+            with gr.Column(elem_classes=["sidebar-nav"]):
+                gr.Markdown("💬 Chats", elem_classes=["nav-item"])
+            
+            # History Section
+            with gr.Column(elem_classes=["history-section"]):
+                gr.Markdown("RECENTS", elem_classes=["history-section-label"])
+                history_list = gr.Radio(
+                    choices=[],
+                    label="",
+                    interactive=True,
+                    container=False,
+                    elem_classes=["history-list"],
+                    show_label=False,
+                    value=None
+                )
+            
+            # Settings in Footer
+            with gr.Column(elem_classes=["sidebar-footer"]):
+                with gr.Accordion("⚙️ Settings", open=False, elem_classes=["settings-accordion"]):
+                    with gr.Column(elem_classes=["settings-content"]):
+                        # Model Selector
+                        with gr.Column(elem_classes=["setting-item"]):
+                            gr.Markdown("Model", elem_classes=["setting-label"])
+                            model_selector = gr.Dropdown(
+                                choices=get_available_models(),
+                                label="",
+                                interactive=True,
+                                elem_classes=["setting-control"],
+                                container=False,
+                                show_label=False
+                            )
+                        
+                        # Personality Selector
+                        with gr.Column(elem_classes=["setting-item"]):
+                            gr.Markdown("Personality", elem_classes=["setting-label"])
+                            personality_selector = gr.Dropdown(
+                                choices=list(PERSONALITIES.keys()),
+                                value="Helpful Assistant",
+                                label="",
+                                interactive=True,
+                                elem_classes=["setting-control"],
+                                container=False,
+                                show_label=False
+                            )
+                        
+                        # Voice Settings
+                        with gr.Column(elem_classes=["setting-item"]):
+                            gr.Markdown("Voice", elem_classes=["setting-label"])
+                            voice_chk = gr.Checkbox(label="Enable Voice", value=False, container=False)
+                            voice_sel = gr.Dropdown(
+                                choices=get_voice_list(),
+                                value="en-US-AriaNeural",
+                                label="",
+                                interactive=True,
+                                elem_classes=["setting-control"],
+                                container=False,
+                                show_label=False,
+                                visible=False
+                            )
+                        
+                        # Delete Chat Button
+                        delete_chat_btn = gr.Button("🗑️ Delete Chat", variant="secondary", size="sm")
+                        
+                        # Custom Model Path
+                        with gr.Column(elem_classes=["setting-item"]):
+                            gr.Markdown("Custom Model Path", elem_classes=["setting-label"])
+                            path_input = gr.Textbox(label="", container=False, show_label=False, elem_classes=["setting-control"])
+                            add_path_btn = gr.Button("Add Path", variant="secondary", size="sm")
+        
         # Chat Area
         with gr.Column(elem_classes=["chat-area"]):
-            chatbot = gr.Chatbot(elem_id="chatbot", bubble_full_width=False, show_copy_button=True, type="messages")
+            # Chat Content
+            with gr.Column(elem_classes=["chat-content"]):
+                chatbot = gr.Chatbot(
+                    elem_id="chatbot",
+                    bubble_full_width=False,
+                    show_copy_button=True,
+                    type="messages",
+                    height="100%"
+                )
             
-            # Input Box (Claude Style)
-            with gr.Group(elem_classes=["input-container-wrapper"]):
-                with gr.Column(elem_classes=["input-box"]):
-                    msg_input = gr.Textbox(
-                        placeholder="Message...",
-                        show_label=False,
-                        container=False,
-                        lines=1,
-                        max_lines=10,
-                        elem_classes=["input-textarea"],
-                        autofocus=True
-                    )
-                    
-                    with gr.Row(elem_classes=["input-toolbar"]):
-                        with gr.Row(elem_classes=["tool-group"]):
-                            upload_btn = gr.UploadButton("📎", file_types=["image"], elem_classes=["tool-btn"])
-                            mic_btn = gr.Audio(sources=["microphone"], type="filepath", show_label=False, container=False, elem_classes=["tool-btn"])
+            # Input Container (Fixed at bottom)
+            with gr.Column(elem_classes=["input-container"]):
+                with gr.Column(elem_classes=["input-wrapper"]):
+                    with gr.Row(elem_classes=["input-box"]):
+                        # Left Icons
+                        with gr.Column(elem_classes=["input-icons"], scale=0):
+                            upload_btn = gr.UploadButton(
+                                "📎",
+                                file_types=["image"],
+                                elem_classes=["input-icon-btn"],
+                                size="sm",
+                                scale=0
+                            )
+                            mic_btn = gr.Audio(
+                                sources=["microphone"],
+                                type="filepath",
+                                show_label=False,
+                                container=False,
+                                elem_classes=["input-icon-btn"],
+                                scale=0
+                            )
                         
-                        send_btn = gr.Button("Send", elem_classes=["send-btn"])
-
+                        # Text Input
+                        msg_input = gr.Textbox(
+                            placeholder="Message...",
+                            show_label=False,
+                            container=False,
+                            lines=1,
+                            max_lines=10,
+                            elem_classes=["input-textarea"],
+                            autofocus=True,
+                            scale=1
+                        )
+                        
+                        # Right Side (Model Selector + Send)
+                        with gr.Column(elem_classes=["input-right"], scale=0):
+                            personality_display = gr.Dropdown(
+                                choices=list(PERSONALITIES.keys()),
+                                value="Helpful Assistant",
+                                label="",
+                                interactive=True,
+                                container=False,
+                                show_label=False,
+                                elem_classes=["model-selector"],
+                                scale=0
+                            )
+                            send_btn = gr.Button("", elem_classes=["send-btn"], scale=0)
+            
             status_display = gr.Markdown("", visible=False)
-            audio_out = gr.Audio(visible=False, autoplay=True, elem_classes=["hidden-audio"])
-
-    # Wiring
+            audio_out = gr.Audio(visible=False, autoplay=True)
+    
+    # Event Handlers
     def on_load():
         session_manager.cleanup_empty_sessions()
         sid, _ = session_manager.create_session()
@@ -373,19 +789,102 @@ with gr.Blocks(theme=theme, css=css, title="Antigravity") as demo:
         def_model = next((m for m in models if "⬇️" not in m and any(x in m for x in ["1B", "3B", "Phi"])), None)
         if not def_model: def_model = next((m for m in models if "⬇️" not in m), None)
         status = text_engine.load_model(def_model) if def_model else "No model"
-        return sid, refresh_session_list(), models, def_model, status
-
-    demo.load(on_load, None, [session_id, history_list, model_selector, model_selector, status_display])
-    new_chat_btn.click(create_new_session, None, [session_id, chatbot, history_list])
-    history_list.select(load_session, None, [session_id, chatbot])
-    delete_chat_btn.click(delete_current_session, history_list, [history_list, session_id, chatbot])
-    model_selector.change(handle_model_change, model_selector, [model_selector, status_display])
-    add_path_btn.click(add_path, path_input, model_selector)
+        # Show welcome message if no history
+        welcome_msg = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
+        return sid, gr.update(choices=refresh_session_list()), models, def_model, status, welcome_msg
     
+    def update_voice_visibility(voice_enabled):
+        return gr.update(visible=voice_enabled)
+    
+    # Wire up events
+    demo.load(
+        on_load,
+        None,
+        [session_id, history_list, model_selector, model_selector, status_display, chatbot]
+    )
+    
+    new_chat_btn.click(
+        create_new_session,
+        None,
+        [session_id, chatbot, history_list]
+    )
+    
+    def load_session_from_title(title):
+        if not title: return None, []
+        sessions = session_manager.list_sessions()
+        session = next((s for s in sessions if s['title'] == title), None)
+        if session:
+            return session['id'], session.get('history', [])
+        return None, []
+    
+    history_list.change(
+        load_session_from_title,
+        history_list,
+        [session_id, chatbot]
+    )
+    
+    delete_chat_btn.click(
+        delete_current_session,
+        history_list,
+        [history_list, session_id, chatbot]
+    )
+    
+    model_selector.change(
+        handle_model_change,
+        model_selector,
+        [model_selector, status_display]
+    )
+    
+    add_path_btn.click(
+        add_path,
+        path_input,
+        model_selector
+    )
+    
+    voice_chk.change(
+        update_voice_visibility,
+        voice_chk,
+        voice_sel
+    )
+    
+    # Sync personality selectors
+    personality_selector.change(
+        lambda x: x,
+        personality_selector,
+        personality_display
+    )
+    
+    personality_display.change(
+        lambda x: x,
+        personality_display,
+        personality_selector
+    )
+    
+    # Chat input handlers
     chat_args = [msg_input, chatbot, session_id, personality_selector, voice_chk, voice_sel]
-    msg_input.submit(chat_turn, chat_args, [chatbot, audio_out, history_list]).then(lambda: "", None, msg_input)
-    send_btn.click(chat_turn, chat_args, [chatbot, audio_out, history_list]).then(lambda: "", None, msg_input)
-    mic_btn.stop_recording(transcribe_audio, mic_btn, msg_input)
+    
+    def chat_wrapper(*args):
+        for result in chat_turn(*args):
+            history, audio, _ = result
+            yield history, audio, gr.update(choices=refresh_session_list())
+    
+    msg_input.submit(
+        chat_wrapper,
+        chat_args,
+        [chatbot, audio_out, history_list]
+    ).then(lambda: "", None, msg_input)
+    
+    send_btn.click(
+        chat_wrapper,
+        chat_args,
+        [chatbot, audio_out, history_list]
+    ).then(lambda: "", None, msg_input)
+    
+    mic_btn.stop_recording(
+        transcribe_audio,
+        mic_btn,
+        msg_input
+    )
 
 if __name__ == "__main__":
     demo.queue().launch(inbrowser=True)
