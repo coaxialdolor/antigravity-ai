@@ -1,0 +1,16 @@
+{
+    "hardware": {
+        "has_nvidia_gpu": true
+    },
+    "paths": {
+        "models_root": "C:\\Users\\Petter\\Desktop\\antigravity\\models",
+        "llm_dir": "C:\\Users\\Petter\\Desktop\\antigravity\\models\\llm",
+        "voice_dir": "C:\\Users\\Petter\\Desktop\\antigravity\\models\\voice",
+        "image_dir": "C:\\Users\\Petter\\Desktop\\antigravity\\models\\image"
+    },
+    "preferences": {
+        "voice_id": "en-US-AriaNeural",
+        "personality": "Helpful Assistant",
+        "theme": "dark"
+    }
+}
