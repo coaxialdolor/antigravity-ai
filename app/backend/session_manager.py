@@ -58,3 +58,16 @@ class SessionManager:
     def _save_session(self, session_id, data):
         with open(self.sessions_dir / f"{session_id}.json", "w") as f:
             json.dump(data, f, indent=2)
+
+    def cleanup_empty_sessions(self):
+        count = 0
+        for f in self.sessions_dir.glob("*.json"):
+            try:
+                with open(f, "r") as file:
+                    data = json.load(file)
+                    if not data.get("history"):
+                        file.unlink()
+                        count += 1
+            except:
+                pass
+        return count
