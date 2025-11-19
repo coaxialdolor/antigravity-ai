@@ -567,38 +567,60 @@ def handle_model_change(model_selection):
 
 def transcribe_audio(audio_path): return stt_engine.transcribe(audio_path) if audio_path else ""
 
+def messages_to_tuples(history):
+    """Convert list of dicts to list of tuples for backend."""
+    tuples = []
+    if not history: return []
+    for i in range(0, len(history) - 1, 2):
+        if i+1 < len(history) and history[i]['role'] == 'user' and history[i+1]['role'] == 'assistant':
+            tuples.append((history[i]['content'], history[i+1]['content']))
+    return tuples
+
 def chat_turn(message, history, session_id, personality, voice_enabled, voice_id):
     if not message.strip(): yield history, None, gr.update(); return
     
+    # Ensure history is a list
+    if history is None: history = []
+    
     # Image Gen
     if any(x in message.lower() for x in ["generate image", "draw ", "create an image"]):
-        history = history + [[message, "🎨 Generating..."]]
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": "🎨 Generating..."})
         yield history, None, gr.update()
+        
         img, status = image_engine.generate(message)
         if img:
             p = os.path.join(models_root, "image", f"gen_{len(history)}.png")
             img.save(p)
-            history[-1][1] = (p, "Generated Image")
-        else: history[-1][1] = f"❌ {status}"
+            # Gradio Chatbot with type='messages' expects content to be a tuple (path, alt_text) for images
+            # OR just the path/url. Let's try tuple.
+            history[-1]["content"] = (p, "Generated Image")
+        else: 
+            history[-1]["content"] = f"❌ {status}"
+            
         yield history, None, gr.update()
         if session_id: session_manager.update_session(session_id, history)
         return
 
     # Text Gen
-    history = history + [[message, ""]]
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": ""})
     yield history, None, gr.update()
     
-    gen = text_engine.generate(message, history[:-1], PERSONALITIES.get(personality, ""), stream=True)
+    # Convert history to tuples for the engine
+    backend_history = messages_to_tuples(history[:-2]) 
+    
+    gen = text_engine.generate(message, backend_history, PERSONALITIES.get(personality, ""), stream=True)
     full_resp = ""
     for chunk in gen:
         full_resp += chunk
-        history[-1][1] = full_resp
+        history[-1]["content"] = full_resp
         yield history, None, gr.update()
         
     if session_id:
         sess = session_manager.get_session(session_id)
         title = sess.get("title", "New Chat")
-        if len(history) == 1:
+        if len(history) <= 2: # First turn
             try: title = text_engine.generate(f"Title for: {message}", [], "Title gen", stream=False).strip('"')[:30]
             except: title = message[:20]
         session_manager.update_session(session_id, history, title)
@@ -614,6 +636,7 @@ def chat_turn(message, history, session_id, personality, voice_enabled, voice_id
 def create_new_session(): 
     sid, _ = session_manager.create_session()
     return sid, [], gr.update(choices=refresh_session_list())
+
 def load_session(evt: gr.SelectData): 
     if not evt.value: return None, []
     sessions = session_manager.list_sessions()
@@ -621,9 +644,11 @@ def load_session(evt: gr.SelectData):
     if session:
         return session['id'], session.get('history', [])
     return None, []
+
 def refresh_session_list(): 
     sessions = session_manager.list_sessions()
     return [s['title'] for s in sessions]
+
 def delete_current_session(sel): 
     if sel: 
         sessions = session_manager.list_sessions()
@@ -631,7 +656,23 @@ def delete_current_session(sel):
         if session:
             session_manager.delete_session(session['id'])
     return gr.update(choices=refresh_session_list(), value=None), None, []
-def add_path(p): text_engine.custom_dirs.append(Path(p)); return gr.update(choices=get_available_models())
+
+def add_path(p): 
+    if not p: return gr.update()
+    path_obj = Path(p)
+    if not path_obj.exists(): return gr.update()
+    
+    # Update in memory
+    if path_obj not in text_engine.custom_dirs:
+        text_engine.custom_dirs.append(path_obj)
+    
+    # Update in config
+    current_paths = config.get("custom_model_paths", [])
+    if str(path_obj) not in current_paths:
+        current_paths.append(str(path_obj))
+        config.update("custom_model_paths", current_paths)
+        
+    return gr.update(choices=get_available_models())
 
 # --- UI ---
 with gr.Blocks(theme=theme, css=css, title="Antigravity") as demo:
@@ -788,9 +829,22 @@ with gr.Blocks(theme=theme, css=css, title="Antigravity") as demo:
         models = get_available_models()
         def_model = next((m for m in models if "⬇️" not in m and any(x in m for x in ["1B", "3B", "Phi"])), None)
         if not def_model: def_model = next((m for m in models if "⬇️" not in m), None)
-        status = text_engine.load_model(def_model) if def_model else "No model"
-        # Show welcome message if no history
-        welcome_msg = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
+        
+        status = "No model loaded"
+        greeting = "Hello! I am ready to help."
+        
+        if def_model:
+            status = text_engine.load_model(def_model)
+            try:
+                # Generate a dynamic greeting
+                gen_greeting = text_engine.generate("Introduce yourself briefly and say hello.", [], "You are a helpful AI.", stream=False)
+                if gen_greeting and isinstance(gen_greeting, str):
+                    greeting = gen_greeting.strip().strip('"')
+            except Exception as e:
+                print(f"Greeting generation failed: {e}")
+
+        # Show welcome message
+        welcome_msg = [{"role": "assistant", "content": greeting}]
         return sid, gr.update(choices=refresh_session_list()), models, def_model, status, welcome_msg
     
     def update_voice_visibility(voice_enabled):
@@ -814,7 +868,15 @@ with gr.Blocks(theme=theme, css=css, title="Antigravity") as demo:
         sessions = session_manager.list_sessions()
         session = next((s for s in sessions if s['title'] == title), None)
         if session:
-            return session['id'], session.get('history', [])
+            history = session.get('history', [])
+            # Convert legacy tuples to messages if needed
+            if history and isinstance(history[0], (list, tuple)):
+                new_history = []
+                for pair in history:
+                    if len(pair) >= 1: new_history.append({"role": "user", "content": pair[0]})
+                    if len(pair) >= 2: new_history.append({"role": "assistant", "content": pair[1]})
+                history = new_history
+            return session['id'], history
         return None, []
     
     history_list.change(
